@@ -39,7 +39,7 @@ export default function Recover({ navigation }) {
         error={false}
       />
       <Text style={{textAlign: "center", bottom: 15}}>Kindly input the 6 digit OTP generated to your email.</Text>
-      <Button style={styles.button} onPress={() => navigation.navigate("Home")}>
+      <Button style={styles.button} onPress={() => navigation.navigate("")}>
       <Text style={styles.buttonText}>Enter</Text>
       </Button>
 
