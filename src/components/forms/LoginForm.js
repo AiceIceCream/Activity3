@@ -1,6 +1,10 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Image } from "react-native";
+import { View, StyleSheet, Image, ToastAndroid } from "react-native";
 import { Button, Text, TextInput } from "react-native-paper";
+import fetchServices from "../Service/fetchServices";
+import { Formik } from "formik";
+import * as Yup from "yup";
+import {HelperText} from "react-native-paper";
 
 export default function LoginForm({ navigation }) {
   const [showPass, setShowPass] = React.useState(false);
@@ -8,19 +12,64 @@ export default function LoginForm({ navigation }) {
   const [email, setEmail] = useState('admin');
   const [password, setPassword] = useState('admin');
 
-  const handleLogin = () => {
-    const adminEmail = 'admin';
-    const adminPassword = 'admin';
+  const showToast = (message = "Something went wrong") => {
+    ToastAndroid.show(message, 3000);
+  };
 
-    if (email.trim() === adminEmail && password.trim() === adminPassword) {
-      console.log('Login successful');
-      navigation.navigate("Home")
-    } else {
-      console.log('Invalid credentials');
+  const validationSchema = Yup.object().shape({
+    email: Yup.string()
+      .email("Invalid Email")
+      .required("Please enter your email"),
+    password: Yup.string().required("Please enter your password"),
+  });
+
+  // const handleLogin = () => {
+  //   const adminEmail = 'admin';
+  //   const adminPassword = 'admin';
+
+  //   if (email.trim() === adminEmail && password.trim() === adminPassword) {
+  //     console.log('Login successful');
+  //     navigation.navigate("Home")
+  //   } else {
+  //     console.log('Invalid credentials');
+  //   }
+  // };
+  
+
+  const handleLogin = async (values) => {
+    try {
+      const url = "http://192.168.43.240:8000/api/v1/login";
+      const result = await fetchServices.postData(url, values);
+      console.debug(result);
+      if (result.message != null) {
+        showToast(result?.message);
+      } else {
+        navigation.navigate("Home");
+      }
+    } catch (e) {
+      console.debug(e.toString());
     }
   };
 
   return (
+    <Formik
+      initialValues={{ email: "", password: "" }}
+      onSubmit={async (values) => {
+        await handleLogin(values);
+      }}
+      validationSchema={validationSchema}
+    >
+    {({
+        values,
+        handleChange,
+        handleBlur,
+        handleSubmit,
+        isSubmitting,
+        errors,
+        touched,
+        setTouched,
+      }) => {
+        return (
     <View styles={{ flex: 1 }}>
        <View style={styles.hero}>
           <Image
@@ -35,8 +84,20 @@ export default function LoginForm({ navigation }) {
         placeholder="Email"
         label="Email"
         style={{ marginTop: 10 , bottom: 20}}
-        error={false}
-      />
+        defaultValue={values.email}
+        value={values.email}
+        keyboardType="email-address"
+        onChangeText={handleChange("email")}
+        onBlur={handleBlur("email")}
+        error={errors.email && touched.email}
+        onFocus={() => setTouched({ email: true }, false)}
+        />
+        {errors.email && touched.email && (
+        <HelperText type="error" visible={errors.email}>
+        {errors.email}
+        </HelperText>
+        )}
+
       <TextInput
         mode="outlined"
         placeholder="Password"
@@ -49,9 +110,20 @@ export default function LoginForm({ navigation }) {
           />
         }
         style={{ marginTop: 10, bottom: 20 }}
+        value={values.password}
+        onChangeText={handleChange("password")}
+        onBlur={handleBlur("password")}
+        error={errors.password && touched.password}
+        onFocus={() => setTouched({ password: true }, false)}
       />
+      {errors.password && touched.password && (
+      <HelperText type="error" visible={errors.password}>
+      {errors.password}
+      </HelperText>
+      )}
+
       <View style={{bottom: 10}}>
-      <Button style={styles.button} onPress={(handleLogin)}>
+      <Button style={styles.button} loading={isSubmitting} disabled={isSubmitting} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Login</Text>
       </Button>
 
@@ -69,6 +141,9 @@ export default function LoginForm({ navigation }) {
       </Button>
       </View>
     </View>
+    );
+  }}
+  </Formik>
   );
 }
 

@@ -1,11 +1,62 @@
-import { View, StyleSheet, Image } from "react-native";
+import { View, StyleSheet, Image, ToastAndroid } from "react-native";
 import React from "react";
+import { useState } from "react";
 import { Button, Text, TextInput } from "react-native-paper";
+import fetchServices from "../Service/fetchServices";
 
 export default function LoginForm({ navigation }) {
 
+  const [isError, setIsError] = React.useState(false);
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [repassword, setRepassword] = React.useState('');
+  const [name, setName] = React.useState('');
+
+  const showToast = (message = "Something went Wrong") => {
+    ToastAndroid.show(message,  3000);
+  };
+
   const [showPass, setShowPass] = React.useState(false);
+
   const logouri =  require('../../media/logo.jpg')
+
+  const handleRegistration = async () => {
+    try{
+
+      if(name === '' || email === '' || password === '' || repassword === ''){
+        showToast("Please input required data");
+        setIsError(true);
+        return false;
+      }
+
+      if(password === '' != repassword === ''){
+        showToast("Please match password");
+        setIsError(true);
+        return false;
+      }
+
+      const url = 'http://192.168.43.240:8000/api/v1/register';
+
+      const data = {
+        name,
+        email,
+        password,
+        password_confirmation: repassword,
+      }
+
+      const result = await fetchServices.postData(url, data);
+
+      console.debug(result);
+
+      if(result?.message != null){
+        showToast(result?.message); 
+      }else{
+        navigation.navigate("Login")
+      }
+    }catch(e){
+      showToast(e.toString());
+    }
+  }
 
   return (
     <View styles={{ flex: 1 }}>
@@ -22,14 +73,18 @@ export default function LoginForm({ navigation }) {
         placeholder="Username"
         label="Username"
         style={{ marginTop: 10 , bottom: 20}}
-        error={false}
+        value={name}
+        onChangeText={setName}
+        error={isError}
       />
       <TextInput
         mode="outlined"
         placeholder="Email"
         label="Email"
         style={{ marginTop: 10 , bottom: 20}}
-        error={false}
+        value={email}
+        onChangeText={setEmail}
+        error={isError}
       />
       <TextInput
         mode="outlined"
@@ -37,6 +92,9 @@ export default function LoginForm({ navigation }) {
         label="Password"
         secureTextEntry={showPass}
         style={{ marginTop: 10, bottom: 20 }}
+        value={password}
+        onChangeText={setPassword}
+        error={isError}
       />
       <TextInput
         mode="outlined"
@@ -44,9 +102,12 @@ export default function LoginForm({ navigation }) {
         label="Retype Password"
         secureTextEntry={showPass}
         style={{ marginTop: 10, bottom: 20 }}
+        value={repassword}
+        onChangeText={setRepassword}
+        error={isError}
       />
       <View style={{bottom: 10}}>
-      <Button style={styles.button} onPress={() => navigation.navigate("")}>
+      <Button style={styles.button} onPress={handleRegistration}>
         <Text style={styles.buttonText}>Register</Text>
       </Button>
 
